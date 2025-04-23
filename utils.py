@@ -15,15 +15,32 @@ def split_dataframe(df):
     """
     df = df[df.iloc[:, 0].notna()]
     df = df.dropna(axis=1, how="all")
-    df = df.iloc[:, :4]
-    df.columns = ["sender_name_1", "amount_1", "sender_name_2", "amount_2"]
+    if len(df.columns) == 4:
+        df.columns = ["sender_name_1", "amount_1", "sender_name_2", "amount_2"]
+        df = df.iloc[:, :4]
+        df1 = df[["sender_name_1", "amount_1"]].rename(
+            columns={"sender_name_1": "sender_name", "amount_1": "amount"}
+        )
+        df2 = df[["sender_name_2", "amount_2"]].rename(
+            columns={"sender_name_2": "sender_name", "amount_2": "amount"}
+        )
 
-    df1 = df[["sender_name_1", "amount_1"]].rename(
-        columns={"sender_name_1": "sender_name", "amount_1": "amount"}
-    )
-    df2 = df[["sender_name_2", "amount_2"]].rename(
-        columns={"sender_name_2": "sender_name", "amount_2": "amount"}
-    )
+    elif len(df.columns) == 6:
+        df.columns = [
+            "code_type",
+            "code_number",
+            "sender_name_1",
+            "amount_1",
+            "sender_name_2",
+            "amount_2",
+        ]
+        df = df.iloc[:, :6]
+        df1 = df[["code_type", "code_number", "sender_name_1", "amount_1"]].rename(
+            columns={"sender_name_1": "sender_name", "amount_1": "amount"}
+        )
+        df2 = df[["sender_name_2", "amount_2"]].rename(
+            columns={"sender_name_2": "sender_name", "amount_2": "amount"}
+        )
 
     return df1, df2
 
