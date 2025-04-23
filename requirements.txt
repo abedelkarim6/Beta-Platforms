@@ -1,1 +1,6 @@
 openpyxl
+fuzzywuzzy
+python-magic
+python-magic-bin
+libmagic
+xlrd
