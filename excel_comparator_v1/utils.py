@@ -154,6 +154,8 @@ def find_unmatched_rows(df1, df2):
     """
     unmatched_df1 = []
     unmatched_df2 = []
+    matched_df1 = []
+    matched_df2 = []
     df1["matched"] = False  # Ensure the column exists and is False by default
     df2["matched"] = False  # Ensure the column exists and is False by default
 
@@ -174,19 +176,26 @@ def find_unmatched_rows(df1, df2):
                         break
         if not matched:
             unmatched_df2.append(row2)
+        else:
+            matched_df2.append(row2)
 
     # iterate over df1 to fill unmatched_df1 with rows that were not matched
     for i1, row1 in df1.iterrows():
         if not row1["matched"]:
             unmatched_df1.append(row1)
+        else:
+            matched_df1.append(row1)
 
     # Transforms list into dataframes
     unmatched_df1, unmatched_df2 = pd.DataFrame(unmatched_df1).reset_index(
         drop=True
     ), pd.DataFrame(unmatched_df2).reset_index(drop=True)
+    matched_df1, matched_df2 = pd.DataFrame(matched_df1).reset_index(
+        drop=True
+    ), pd.DataFrame(matched_df2).reset_index(drop=True)
 
     # returns 2 dataframes with unmatched rows
-    return unmatched_df1, unmatched_df2
+    return unmatched_df1, unmatched_df2, matched_df1, matched_df2
 
 
 # layer 2 of matching
@@ -252,37 +261,50 @@ def match_similar_names_on_amount(df1, df2):
 
 def main(uploaded, file_type):
     """
-    Main function to load, clean, and match transaction data from Excel file.
+    Loads, cleans, and matches transaction data from an Excel file.
+
     Returns:
-        matched_df: Matched transactions between df1 and df2.
-        unmatched_df1: Transactions from df1 with no match.
-        unmatched_df2: Transactions from df2 with no match.
+        matched_df1, matched_df2: Matched transactions.
+        semi_matched_df1, semi_matched_df2: Fuzzy matched transactions.
+        unmatched_df1, unmatched_df2: Unmatched transactions.
     """
 
-    if file_type == "xls":
-        df = pd.read_excel(uploaded, engine="xlrd")
-    else:
-        df = pd.read_excel(uploaded)
+    # Load Excel file with appropriate engine
+    read_engine = "xlrd" if file_type == "xls" else None
+    df = pd.read_excel(uploaded, engine=read_engine)
 
-    # Split and clean
-    df1, df2 = split_dataframe(df)
+    # Clean and split data
+    df1, df2 = map(clean_dataframe, split_dataframe(df))
 
-    df1 = clean_dataframe(df1)
-    df2 = clean_dataframe(df2)
+    # Lightweight filtering to find potential matches
+    unmatched_df1, unmatched_df2, matched_df1, matched_df2 = find_unmatched_rows(
+        df1, df2
+    )
 
-    # Pre-filter unmatched using lightweight comparison
-    unmatched_df1, unmatched_df2 = find_unmatched_rows(df1, df2)
+    # Fuzzy matching on remaining unmatched data
+    semi_matched_df, unmatched_df1, unmatched_df2 = match_similar_names_on_amount(
+        unmatched_df1, unmatched_df2
+    )
 
-    # Run full fuzzy matching
-    matched_df, unmatched_df1, unmatched_df2 = match_similar_names_on_amount(
+    # Clean up fuzzy matched data
+    semi_matched_df.drop(
+        columns=["df1_index", "df2_index"], errors="ignore", inplace=True
+    )
+    semi_matched_df1, semi_matched_df2 = split_dataframe(semi_matched_df)
+    for df in [semi_matched_df2, matched_df1, matched_df2]:
+        df.drop(columns=["matched"], errors="ignore", inplace=True)
+
+    # Ensure sender_name is consistently formatted
+    for df in [matched_df1, matched_df2]:
+        df["sender_name"] = df["sender_name"].apply(
+            lambda x: " ".join(x) if isinstance(x, list) else x
+        )
+
+    return (
+        matched_df1,
+        matched_df2,
+        semi_matched_df1,
+        semi_matched_df2,
         unmatched_df1,
         unmatched_df2,
     )
-
-    # Final cleanup
-    matched_df = matched_df.drop(columns=["df1_index", "df2_index"], errors="ignore")
-    matched_df1, matched_df2 = split_dataframe(matched_df)
-    if "matched" in unmatched_df2.columns:
-        unmatched_df2 = unmatched_df2.drop("matched", axis=1)
-
-    return matched_df1, matched_df2, unmatched_df1, unmatched_df2
