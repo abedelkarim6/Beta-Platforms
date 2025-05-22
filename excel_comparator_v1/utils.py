@@ -23,6 +23,7 @@ def split_dataframe(df):
         if len(df.columns) == 4 or len(df.columns) == 5:
             print("Number of columns: ", len(df.columns))
             df = df.iloc[:, :4]
+            df.columns = ["name1", "amount1", "name2", "amount2"]
             df.columns = ["sender_name_1", "amount_1", "sender_name_2", "amount_2"]
             df1 = df[["sender_name_1", "amount_1"]].rename(
                 columns={"sender_name_1": "sender_name", "amount_1": "amount"}
@@ -32,7 +33,7 @@ def split_dataframe(df):
             )
 
         elif len(df.columns) == 6:
-            # print(6)
+            print("Number of columns: ", len(df.columns))
             df = df.iloc[:, :6]
             df.columns = [
                 "code_type",
@@ -162,13 +163,13 @@ def find_unmatched_rows(df1, df2):
     # iterate over df1 to find a match with df2, incase not found, add to unmatched_df1
     for i2, row2 in df2.iterrows():
         matched = False
+
         for i1, row1 in df1.iterrows():
             if not df1.at[i1, "matched"] and not df2.at[i2, "matched"]:
                 if row1["amount"] == row2["amount"]:
                     tokens1 = row1["sender_name"]
                     tokens2 = row2["sender_name"]
-                    # if "amozanas" in tokens1:
-                    #     print(tokens1, "---------------", tokens2)
+
                     if is_name_match_1(tokens1, tokens2):
                         matched = True
                         df1.at[i1, "matched"] = True
@@ -176,6 +177,7 @@ def find_unmatched_rows(df1, df2):
                         break
         if not matched:
             unmatched_df2.append(row2)
+
         else:
             matched_df2.append(row2)
 
@@ -271,7 +273,7 @@ def main(uploaded, file_type):
 
     # Load Excel file with appropriate engine
     read_engine = "xlrd" if file_type == "xls" else None
-    df = pd.read_excel(uploaded, engine=read_engine)
+    df = pd.read_excel(uploaded, engine=read_engine, header=None)
 
     # Clean and split data
     df1, df2 = map(clean_dataframe, split_dataframe(df))
