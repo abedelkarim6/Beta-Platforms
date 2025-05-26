@@ -95,7 +95,9 @@ def is_name_match_1(tokens1, tokens2):
     """
     global counter1
 
-    if all(word in tokens1[:3] for word in tokens2 if len(word) > 2):
+    if bool([word for word in tokens2 if len(word) > 2]) and all(
+        word in tokens1[:3] for word in tokens2 if len(word) > 2
+    ):
         counter1 += 1
         return True
     else:
@@ -165,16 +167,19 @@ def find_unmatched_rows(df1, df2):
         matched = False
 
         for i1, row1 in df1.iterrows():
-            if not df1.at[i1, "matched"] and not df2.at[i2, "matched"]:
-                if row1["amount"] == row2["amount"]:
-                    tokens1 = row1["sender_name"]
-                    tokens2 = row2["sender_name"]
 
-                    if is_name_match_1(tokens1, tokens2):
-                        matched = True
-                        df1.at[i1, "matched"] = True
-                        df2.at[i2, "matched"] = True
-                        break
+            if not df1.at[i1, "matched"] and not df2.at[i2, "matched"]:
+                tokens1 = row1["sender_name"]
+                tokens2 = row2["sender_name"]
+
+                # if row1["amount"] == row2["amount"] == 7000:
+                #     print(tokens1, " ------ ", tokens2)
+
+                if is_name_match_1(tokens1, tokens2):
+                    matched = True
+                    df1.at[i1, "matched"] = True
+                    df2.at[i2, "matched"] = True
+                    break
         if not matched:
             unmatched_df2.append(row2)
 
