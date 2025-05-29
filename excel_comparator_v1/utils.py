@@ -172,17 +172,17 @@ def find_unmatched_rows(df1, df2):
                 tokens1 = row1["sender_name"]
                 tokens2 = row2["sender_name"]
 
-                # if row1["amount"] == row2["amount"] == 7000:
-                #     print(tokens1, " ------ ", tokens2)
-
-                if is_name_match_1(tokens1, tokens2):
+                if (
+                    is_name_match_1(tokens1, tokens2)
+                    and row1["amount"] == row2["amount"]
+                ):
                     matched = True
                     df1.at[i1, "matched"] = True
                     df2.at[i2, "matched"] = True
                     break
+
         if not matched:
             unmatched_df2.append(row2)
-
         else:
             matched_df2.append(row2)
 
