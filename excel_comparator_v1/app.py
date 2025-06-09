@@ -1,7 +1,8 @@
 import magic
 import pandas as pd
 import streamlit as st
-from utils import main
+
+from main import *
 
 # Streamlit config
 st.set_page_config(page_title="Excel Matcher", layout="wide")
