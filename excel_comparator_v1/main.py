@@ -3,21 +3,6 @@ import pandas as pd
 from utils import *
 
 
-def filter_rows_by_value(df, column_name, value):
-    """
-    Returns rows from the DataFrame where the specified column matches the given value.
-
-    Parameters:
-    df (pd.DataFrame): The DataFrame to filter.
-    column_name (str): The column to check.
-    value (any): The value to match in the column.
-
-    Returns:
-    pd.DataFrame: Filtered DataFrame with matching rows.
-    """
-    return df[df[column_name] == value]
-
-
 def main(uploaded, file_type):
     """
     Loads, cleans, and matches transaction data from an Excel file.

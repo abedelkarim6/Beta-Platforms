@@ -63,20 +63,39 @@ if uploaded_file:
     if view_option == "Unmatched Entries":
         st.subheader("❌ Unmatched Entries")
 
-        # col1, col2 = st.columns(2)
-
-        # with col1:
-        #     st.markdown(f"**First dataset** — {len(unmatched_df1)} rows")
-        #     st.dataframe(unmatched_df1, use_container_width=True, hide_index=True)
-
-        # with col2:
-        #     st.markdown(f"**Second dataset** — {len(unmatched_df2)} rows")
-        #     st.dataframe(unmatched_df2, use_container_width=True, hide_index=True)
-
         # Sort the dfs
         unmatched_df1 = unmatched_df1.sort_values(by="amount", ascending=True)
         unmatched_df2 = unmatched_df2.sort_values(by="amount", ascending=True)
 
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown(f"**First dataset** — {len(unmatched_df1)} rows")
+            edited_df1 = st.data_editor(
+                unmatched_df1,
+                use_container_width=True,
+                num_rows="dynamic",
+                column_config={
+                    "amount": st.column_config.NumberColumn(disabled=True),
+                    "sender_name": st.column_config.TextColumn(disabled=True),
+                },
+                key="checkbox_editor1",
+            )
+
+        with col2:
+            st.markdown(f"**Second dataset** — {len(unmatched_df2)} rows")
+            edited_df2 = st.data_editor(
+                unmatched_df2,
+                use_container_width=True,
+                num_rows="dynamic",
+                column_config={
+                    "amount": st.column_config.NumberColumn(disabled=True),
+                    "sender_name": st.column_config.TextColumn(disabled=True),
+                },
+                key="checkbox_editor2",
+            )
+
+        # optional combine
         combined_unmatched_df = pd.concat(
             [
                 unmatched_df1.reset_index(drop=True),
@@ -84,7 +103,6 @@ if uploaded_file:
             ],
             axis=1,
         )
-
         # Optionally rename columns to avoid confusion
         combined_unmatched_df.columns = [
             f"df1_{col}" for col in unmatched_df1.columns
