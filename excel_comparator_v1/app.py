@@ -64,8 +64,12 @@ if uploaded_file:
         st.subheader("❌ Unmatched Entries")
 
         # Sort the dfs
-        unmatched_df1 = unmatched_df1.sort_values(by="amount", ascending=True)
-        unmatched_df2 = unmatched_df2.sort_values(by="amount", ascending=True)
+        unmatched_df1 = unmatched_df1.sort_values(
+            by="amount", ascending=True
+        ).reset_index(drop=True)
+        unmatched_df2 = unmatched_df2.sort_values(
+            by="amount", ascending=True
+        ).reset_index(drop=True)
 
         col1, col2 = st.columns(2)
 
@@ -80,6 +84,7 @@ if uploaded_file:
                     "sender_name": st.column_config.TextColumn(disabled=True),
                 },
                 key="checkbox_editor1",
+                hide_index=True,
             )
 
         with col2:
@@ -93,24 +98,25 @@ if uploaded_file:
                     "sender_name": st.column_config.TextColumn(disabled=True),
                 },
                 key="checkbox_editor2",
+                hide_index=True,
             )
 
-        # optional combine
-        combined_unmatched_df = pd.concat(
-            [
-                unmatched_df1.reset_index(drop=True),
-                unmatched_df2.reset_index(drop=True),
-            ],
-            axis=1,
-        )
-        # Optionally rename columns to avoid confusion
-        combined_unmatched_df.columns = [
-            f"df1_{col}" for col in unmatched_df1.columns
-        ] + [f"df2_{col}" for col in unmatched_df2.columns]
+        # # optional combine
+        # combined_unmatched_df = pd.concat(
+        #     [
+        #         unmatched_df1.reset_index(drop=True),
+        #         unmatched_df2.reset_index(drop=True),
+        #     ],
+        #     axis=1,
+        # )
+        # # Optionally rename columns to avoid confusion
+        # combined_unmatched_df.columns = [
+        #     f"df1_{col}" for col in unmatched_df1.columns
+        # ] + [f"df2_{col}" for col in unmatched_df2.columns]
 
-        # Display in one block
-        st.markdown(f"**Unmatched Rows — {len(combined_unmatched_df)} pairs**")
-        st.dataframe(combined_unmatched_df, use_container_width=True, hide_index=True)
+        # # Display in one block
+        # st.markdown(f"**Unmatched Rows — {len(combined_unmatched_df)} pairs**")
+        # st.dataframe(combined_unmatched_df, use_container_width=True, hide_index=True)
 
     elif view_option == "Potential Matches":
         st.subheader("✅ Potential Matched Rows Based on Name & Amount")

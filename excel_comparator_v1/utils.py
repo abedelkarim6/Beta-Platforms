@@ -28,12 +28,12 @@ def split_dataframe(df):
             df = df.iloc[:, :4]  # only take the first 4 if extra one exists
             df.columns = ["sender_name_1", "amount_1", "sender_name_2", "amount_2"]
             # Add a row ID to track original row position
-            df["row_id"] = df.index + 1
+            # df["row_id"] = df.index + 1
 
-            df1 = df[["row_id", "sender_name_1", "amount_1"]].rename(
+            df1 = df[["sender_name_1", "amount_1"]].rename(
                 columns={"sender_name_1": "sender_name", "amount_1": "amount"}
             )
-            df2 = df[["row_id", "sender_name_2", "amount_2"]].rename(
+            df2 = df[["sender_name_2", "amount_2"]].rename(
                 columns={"sender_name_2": "sender_name", "amount_2": "amount"}
             )
 
@@ -48,12 +48,12 @@ def split_dataframe(df):
                 "amount_2",
             ]
 
-            df["row_id"] = df.index + 1  # in case a new DataFrame was assigned
+            # df["row_id"] = df.index + 1  # in case a new DataFrame was assigned
 
-            df1 = df[
-                ["row_id", "code_type", "code_number", "sender_name_1", "amount_1"]
-            ].rename(columns={"sender_name_1": "sender_name", "amount_1": "amount"})
-            df2 = df[["row_id", "sender_name_2", "amount_2"]].rename(
+            df1 = df[["code_type", "code_number", "sender_name_1", "amount_1"]].rename(
+                columns={"sender_name_1": "sender_name", "amount_1": "amount"}
+            )
+            df2 = df[["sender_name_2", "amount_2"]].rename(
                 columns={"sender_name_2": "sender_name", "amount_2": "amount"}
             )
 
@@ -183,12 +183,12 @@ def find_unmatched_rows(df1, df2):
                     tokens1 = row1["sender_name"]
                     tokens2 = row2["sender_name"]
 
-                    # if row1["amount"] == row2["amount"] == 200.0:
-                    #     print("Debugging match for amount 200.0")
-                    #     print("Tokens1:", tokens1)
-                    #     print("Tokens2:", tokens2)
-                    #     print(is_name_match_1(tokens1, tokens2))
-                    #     print()
+                    if row1["amount"] == row2["amount"] == 5280:
+                        print("Debugging match for amount 5280.0")
+                        print("Tokens1:", tokens1)
+                        print("Tokens2:", tokens2)
+                        print(is_name_match_1(tokens1, tokens2))
+                        print()
 
                     if row1["amount"] == row2["amount"] and is_name_match_1(
                         tokens1, tokens2
@@ -247,6 +247,12 @@ def match_similar_names_on_amount(df1, df2):
                 if j in matched_indices_df1:
                     continue
                 tokens1 = row1["sender_name"]
+                if row1["amount"] == row2["amount"] == 5280:
+                    print("Debugging match for amount 5280.0")
+                    print("Tokens1:", tokens1)
+                    print("Tokens2:", tokens2)
+                    print(is_name_match_2(tokens1, tokens2))
+                    print()
                 if is_name_match_2(tokens1, tokens2):
                     matched_rows.append(
                         {
