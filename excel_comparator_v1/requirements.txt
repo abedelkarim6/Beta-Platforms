@@ -1,5 +1,0 @@
-openpyxl
-fuzzywuzzy
-python-magic
-xlrd
-streamlit
