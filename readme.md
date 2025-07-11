@@ -1,43 +1,76 @@
-# 💱 Streamlit Currency Converter App
+# 💱 Currency Exchange Tool – Project Overview
 
-A lightweight 2-page Streamlit web app to manage currency conversion rates and perform quick conversions with fee handling. Designed for small-scale use with up to 50 rates and optional CSV upload/download.
-
----
-
-## 🚀 Features
-
-### 🔧 Page 1 – Manage Rates
-- Add new conversion rates with:
-  - Currency 1 → Currency 2
-  - Buy Rate, Sell Rate
-  - Extra Fees
-  - %Buy, %Sell margins
-- Edit rates inline using `st.data_editor`
-- Delete rows interactively
-- Save/load rates using CSV:
-  - Download current table as CSV
-  - Upload CSV to restore or replace rates
-
-### 🔁 Page 2 – Currency Converter
-- Choose currencies and operation (Buy/Sell)
-- Enter:
-  - Amount paid by customer
-  - Amount paid by Beta
-  - Custom rate
-  - Optional extra fees
-- Final amount is automatically calculated based on:
-  - Rate used
-  - Margin % and fee handling
-  - Exclude-fees checkbox
+This Streamlit-based app is designed to streamline daily currency exchange operations for a manual exchanger. It includes tools for rate management, real-time conversions, and handling frequent customer-specific deals.
 
 ---
 
-## 🛠 How to Run Locally
+## 📄 App Pages
 
-1. **Clone this repo**
-   ```bash
-   git clone https://github.com/yourusername/currency-converter-app.git
-   ```
-   ```bash
-   cd currency-converter-app
-   ```
+### 1. **Rates Management**
+Manage and define buy/sell rates for each currency pair.
+
+**Features:**
+- Select currency pair (e.g., USDT/LBP).
+- Set **official rate** (pulled from Binance or manually entered).
+- Choose **margin type**:  
+  - **Points** (e.g., +2,000 LBP)  
+  - **Percentage** (e.g., +2%)
+- Set margin value (one is user-defined, the other auto-calculated).
+- Automatically calculate and display:
+  - Final **Buy Rate**
+  - Final **Sell Rate**
+  - Effective % margin or points
+
+---
+
+### 2. **Converter Tool**
+A real-time converter for use by employees to calculate exchange results.
+
+**Features:**
+- Select currency pair (e.g., USDT ⇄ LBP)
+- Two currency input boxes (editable on both sides)
+  - Editing either box updates the other live
+- Display:
+  - Official rate used
+  - Margin details (points and %)
+  - Final applied rate (Buy or Sell)
+- Optional: Include/exclude **extra fees**
+  - Toggle to apply extra fee (flat or %)
+- Calculate and display:
+  - Final amount after margin + optional fees
+  - Breakdown of calculations
+
+---
+
+### 3. **Customers Management**
+Manage frequent customers with custom margin rules.
+
+**Features:**
+- Define and categorize customers by **visit frequency** (e.g., Regular, VIP, etc.)
+- For each customer category:
+  - Define **custom margin rules** based on amount ranges:
+    - `< 1,000 USDT`
+    - `< 10,000 USDT`
+    - `< 50,000 USDT`
+- When converting, automatically apply customer-specific margin based on:
+  - Who the customer is
+  - How much they're exchanging
+
+---
+
+## ⚙️ Key Behaviors
+
+- Margins can be defined in **points** or **percent**, and are convertible.
+- Both **buy** and **sell** rates are stored and used separately.
+- Fees can be **optional** and defined per transaction.
+- App is optimized for **internal use** (employee interface).
+
+---
+
+## 🧩 Next Steps
+
+- Define data model and storage (e.g., JSON, SQLite, or simple CSV)
+- Integrate Binance API or rate entry panel
+- Build Streamlit UI for all 3 pages
+- Add logic for margin conversion and customer-specific rates
+
