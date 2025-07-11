@@ -74,9 +74,8 @@
 # st.success(f"✅ Final Converted Amount: {final_amount:.4f}")
 import streamlit as st
 import pandas as pd
-
+from pages.Customers import fetch_customers, fetch_customer_ranges
 CSV_PATH = "data/rates.csv"
-
 st.set_page_config(layout="wide")
 st.title("🔄 Converter Tool")
 
@@ -84,13 +83,48 @@ st.title("🔄 Converter Tool")
 df = pd.read_csv(CSV_PATH)
 pairs = df["pair"].dropna().unique()
 selected_pair = st.selectbox("Currency Pair", pairs)
-
 row = df[df["pair"] == selected_pair].iloc[-1]
 currency1, currency2 = selected_pair.split("/")
 
-# Rates
-rate_forward = row["sell_rate"]  # currency1 -> currency2
-rate_backward = row["buy_rate"]  # currency2 -> currency1
+# Fetch customers for display
+customers_df = fetch_customers()  # Assuming you have this function in customer.py
+if customers_df.empty:
+    st.warning("No customers available.")
+    st.stop()
+
+# Display customer selection
+customer_names = customers_df["name"].unique()  # Assuming 'name' is the customer name column
+selected_customer = st.selectbox("Select Customer", customer_names)
+
+# Fetch customer ranges based on selected customer
+customer_id = customers_df[customers_df["name"] == selected_customer]["id"].iloc[0]
+customer_ranges_df = fetch_customer_ranges(customer_id)
+
+if customer_ranges_df.empty:
+    st.warning(f"No range data available for {selected_customer}.")
+else:
+    st.markdown(f"### Ranges for {selected_customer}")
+    st.dataframe(customer_ranges_df)  # Display the customer's range data
+
+# Extra fees toggle
+exclude_fees = st.checkbox("🚫 Exclude Extra Fees", value=False)
+
+# Get extra fees
+extra_fees = row.get("extra_fees", 0) if not exclude_fees else 0
+
+# Rates (with or without extra fees)
+rate_forward = row["sell_rate"] + extra_fees  # currency1 -> currency2
+rate_backward = row["buy_rate"] + extra_fees  # currency2 -> currency1
+
+# Get official rate and calculate margin percentages
+official_rate = row.get("official_rate", 0)
+if official_rate > 0:
+    # Calculate margin percentages (including fees if not excluded)
+    sell_margin_pct = ((rate_forward - official_rate) / official_rate) * 100
+    buy_margin_pct = ((rate_backward - official_rate) / official_rate) * 100
+else:
+    sell_margin_pct = 0
+    buy_margin_pct = 0
 
 # Initialize session state amounts
 if "amount1" not in st.session_state:
@@ -102,21 +136,17 @@ if "amount2" not in st.session_state:
 if "last_changed" not in st.session_state:
     st.session_state.last_changed = "amount1"
 
-
 def on_amount1_change():
     st.session_state.last_changed = "amount1"
     # Convert amount1 to amount2 using forward rate
     st.session_state.amount2 = st.session_state.amount1 * rate_forward
-
 
 def on_amount2_change():
     st.session_state.last_changed = "amount2"
     # Convert amount2 to amount1 using backward rate
     st.session_state.amount1 = st.session_state.amount2 / rate_backward
 
-
 col1, col2 = st.columns(2)
-
 with col1:
     st.number_input(
         f"{currency1}",
@@ -125,7 +155,6 @@ with col1:
         on_change=on_amount1_change,
         format="%.4f",
     )
-
 with col2:
     st.number_input(
         f"{currency2}",
@@ -135,6 +164,79 @@ with col2:
         format="%.4f",
     )
 
-st.markdown(
-    f"**Rate Used:** {rate_forward:.4f} ({currency1} → {currency2}) and {rate_backward:.4f} ({currency2} → {currency1})"
-)
+# Display rates with margin information
+st.markdown("---")
+st.markdown("### 📊 Rate Information")
+
+col1, col2 = st.columns(2)
+with col1:
+    st.metric(
+        label=f"Sell Rate ({currency1} → {currency2})",
+        value=f"{rate_forward:.4f}",
+        delta=f"{sell_margin_pct:+.2f}%" if official_rate > 0 else None
+    )
+with col2:
+    st.metric(
+        label=f"Buy Rate ({currency2} → {currency1})",
+        value=f"{rate_backward:.4f}",
+        delta=f"{buy_margin_pct:+.2f}%" if official_rate > 0 else None
+    )
+
+# Additional detailed information
+if official_rate > 0:
+    st.markdown("### 📈 Margin Details")
+    margin_col1, margin_col2, margin_col3, margin_col4 = st.columns(4)
+    
+    with margin_col1:
+        st.info(f"**Official Rate:** {official_rate:.4f}")
+    
+    with margin_col2:
+        margin_color = "🟢" if sell_margin_pct >= 0 else "🔴"
+        st.info(f"**Sell Margin:** {margin_color} {sell_margin_pct:+.2f}%")
+    
+    with margin_col3:
+        margin_color = "🟢" if buy_margin_pct >= 0 else "🔴"
+        st.info(f"**Buy Margin:** {margin_color} {buy_margin_pct:+.2f}%")
+    
+    with margin_col4:
+        fee_status = "❌ Excluded" if exclude_fees else "✅ Included"
+        fee_color = "secondary" if exclude_fees else "normal"
+        st.info(f"**Extra Fees:** {fee_status}\n\n{row.get('extra_fees', 0):.4f}")
+
+else:
+    st.markdown(
+        f"**Rate Used:** {rate_forward:.4f} ({currency1} → {currency2}) and {rate_backward:.4f} ({currency2} → {currency1})"
+    )
+    
+    # Show fees status even without official rate
+    if row.get("extra_fees", 0) > 0:
+        fee_status = "❌ Excluded" if exclude_fees else "✅ Included"
+        st.info(f"**Extra Fees ({fee_status}):** {row.get('extra_fees', 0):.4f}")
+
+# Show conversion summary
+st.markdown("---")
+st.markdown("### 💡 Conversion Summary")
+base_sell_rate = row["sell_rate"]
+base_buy_rate = row["buy_rate"]
+fees = row.get("extra_fees", 0)
+
+summary_col1, summary_col2 = st.columns(2)
+with summary_col1:
+    st.write("**Sell Rate Breakdown:**")
+    st.write(f"Base Rate: {base_sell_rate:.4f}")
+    if fees > 0:
+        if exclude_fees:
+            st.write(f"Extra Fees: {fees:.4f} (❌ Excluded)")
+        else:
+            st.write(f"Extra Fees: {fees:.4f} (✅ Applied)")
+    st.write(f"**Final Rate: {rate_forward:.4f}**")
+
+with summary_col2:
+    st.write("**Buy Rate Breakdown:**")
+    st.write(f"Base Rate: {base_buy_rate:.4f}")
+    if fees > 0:
+        if exclude_fees:
+            st.write(f"Extra Fees: {fees:.4f} (❌ Excluded)")
+        else:
+            st.write(f"Extra Fees: {fees:.4f} (✅ Applied)")
+    st.write(f"**Final Rate: {rate_backward:.4f}**")

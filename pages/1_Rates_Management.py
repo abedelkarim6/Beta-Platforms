@@ -8,22 +8,51 @@ st.set_page_config(page_title="Rates Management", layout="wide")
 st.title("💱 Rates Management")
 
 
-# Helper: linked margin inputs
+# Helper: linked margin inputs with dynamic calculation
 def margin_input(label, official_rate, margin_type, key_prefix=""):
     col1, col2 = st.columns(2)
+    
     with col1:
-        margin_pct = st.number_input(
-            f"{label} Margin (%)", value=0.0, format="%.4f", key=f"{key_prefix}_pct"
-        )
+        if margin_type.lower() == "percent":
+            # User can input percentage, points will be calculated
+            margin_pct = st.number_input(
+                f"{label} Margin (%)", 
+                value=0.0, 
+                format="%.4f", 
+                key=f"{key_prefix}_pct"
+            )
+            # Calculate points based on percentage
+            margin_pts = (margin_pct / 100 * official_rate) if official_rate else 0
+        else:
+            # Points mode - percentage is calculated, so show as disabled
+            margin_pct = st.number_input(
+                f"{label} Margin (%)", 
+                value=(st.session_state.get(f"{key_prefix}_pts", 0) / official_rate * 100) if official_rate else 0,
+                format="%.4f", 
+                key=f"{key_prefix}_pct_display",
+                disabled=True
+            )
+    
     with col2:
-        margin_pts = st.number_input(
-            f"{label} Margin (pts)", value=0.0, format="%.4f", key=f"{key_prefix}_pts"
-        )
-
-    if margin_type == "points":
-        margin_pct = (margin_pts / official_rate * 100) if official_rate else 0
-    else:
-        margin_pts = (margin_pct / 100 * official_rate) if official_rate else 0
+        if margin_type.lower() == "points":
+            # User can input points, percentage will be calculated
+            margin_pts = st.number_input(
+                f"{label} Margin (pts)", 
+                value=0.0, 
+                format="%.4f", 
+                key=f"{key_prefix}_pts"
+            )
+            # Calculate percentage based on points
+            margin_pct = (margin_pts / official_rate * 100) if official_rate else 0
+        else:
+            # Percentage mode - points is calculated, so show as disabled
+            margin_pts = st.number_input(
+                f"{label} Margin (pts)", 
+                value=(st.session_state.get(f"{key_prefix}_pct", 0) / 100 * official_rate) if official_rate else 0,
+                format="%.4f", 
+                key=f"{key_prefix}_pts_display",
+                disabled=True
+            )
 
     return margin_pct, margin_pts
 

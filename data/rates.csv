@@ -1,2 +1,4 @@
 pair,official_rate,margin_type,buy_margin_value,sell_margin_value,final_buy_rate,final_sell_rate,mode,buy_rate,sell_rate,extra_fees
-
+USDT/LBP ,90000.0,Points,2000.0,1.0,,,Official Rate + Margin,92000.0,90001.0,1000.0
+USDT/LBP ,0.0,,0.0,0.0,,,Direct Buy/Sell Rates,1.0,1.0,1.0
+USDT/USD ,1.1,Percent,0.012100000000000001,0.0011,,,Official Rate + Margin,1.1121,1.1011000000000002,0.0
