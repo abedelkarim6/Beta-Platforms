@@ -63,7 +63,8 @@ if Path(CSV_PATH).exists():
 else:
     df = pd.DataFrame(
         columns=[
-            "pair",
+            "from_currency",
+            "to_currency",
             "mode",
             "official_rate",
             "margin_type",
@@ -81,28 +82,37 @@ if "rate_table" not in st.session_state:
 
 # === Form UI ===
 st.subheader("➕ Add New Rate")
-pair = st.text_input("Currency Pair", placeholder="e.g. USDT/LBP")
+from_currency = st.text_input("From Currency", placeholder="e.g. USD")
+to_currency = st.text_input("To Currency", placeholder="e.g. LBP")
 mode = st.radio(
     "Select Mode", ["Official Rate + Margin", "Direct Buy/Sell Rates"], horizontal=True
 )
 
+official_rate = 0.0
+
 if mode == "Official Rate + Margin":
     st.markdown("### 📊 Margin-based Calculation")
+    
     official_rate = st.number_input("Official Rate", min_value=0.0, format="%.4f")
-    margin_type = st.radio("Margin Type", ["Percent", "Points"], horizontal=True)
 
-    buy_margin_pct, buy_margin_val = margin_input(
-        "Buy", official_rate, margin_type, "buy"
-    )
-    sell_margin_pct, sell_margin_val = margin_input(
-        "Sell", official_rate, margin_type, "sell"
-    )
+    # Disable margin inputs if official_rate is 0
+    if official_rate > 0:
+        margin_type = st.radio("Margin Type", ["Percent", "Points"], horizontal=True)
 
-    buy_rate = official_rate + buy_margin_val
-    sell_rate = official_rate + sell_margin_val
+        buy_margin_pct, buy_margin_val = margin_input(
+            "Buy", official_rate, margin_type, "buy"
+        )
+        sell_margin_pct, sell_margin_val = margin_input(
+            "Sell", official_rate, margin_type, "sell"
+        )
 
-    st.success(f"Buy Rate = {buy_rate:.4f}")
-    st.success(f"Sell Rate = {sell_rate:.4f}")
+        buy_rate = official_rate + buy_margin_val
+        sell_rate = official_rate + sell_margin_val
+
+        st.success(f"Buy Rate = {buy_rate:.4f}")
+        st.success(f"Sell Rate = {sell_rate:.4f}")
+    else:
+        st.warning("Please enter a valid Official Rate first to enable margin inputs.")
 
 else:
     st.markdown("### ✍️ Direct Entry")
@@ -116,15 +126,16 @@ else:
 extra_fees = st.number_input("Extra Fees", min_value=0.0, format="%.4f")
 
 if st.button("✅ Add Rate"):
-    if not pair:
-        st.error("Currency pair is required.")
+    if not from_currency or not to_currency:
+        st.error("Both From Currency and To Currency are required.")
     elif mode == "Official Rate + Margin" and official_rate <= 0:
         st.error("Official rate must be greater than zero.")
     elif mode == "Direct Buy/Sell Rates" and (buy_rate <= 0 or sell_rate <= 0):
         st.error("Buy and Sell rates must be greater than zero.")
     else:
         new_row = {
-            "pair": pair,
+            "from_currency": from_currency,
+            "to_currency": to_currency,
             "mode": mode,
             "official_rate": official_rate,
             "margin_type": margin_type,
@@ -140,24 +151,25 @@ if st.button("✅ Add Rate"):
         )
         df.to_csv(CSV_PATH, index=False)
         st.session_state.rate_table = df.copy()
-        st.success(f"✅ Rate for {pair} added successfully!")
+        st.success(f"✅ Rate for {from_currency}/{to_currency} added successfully!")
         st.rerun()
 
 # === Show Table ===
 st.divider()
 st.subheader("📄 Existing Rates")
 
+# Update the column names for display
 edited_df = st.data_editor(
-    st.session_state.rate_table,
+    st.session_state.rate_table[["from_currency", "to_currency", "mode", "official_rate", "buy_rate", "sell_rate", "extra_fees"]],
     use_container_width=True,
     num_rows="dynamic",
     key="rates_editor",
 )
 
 # Save changes made via the editor
-if not edited_df.equals(st.session_state.rate_table):
+if not edited_df.equals(st.session_state.rate_table[["from_currency", "to_currency", "mode", "official_rate", "buy_rate", "sell_rate", "extra_fees"]]):
     st.session_state.rate_table = edited_df.reset_index(drop=True)
 
 if st.button("💾 Save Changes"):
     st.session_state.rate_table.to_csv(CSV_PATH, index=False)
-    st.success("Rates saved to Excel!")
+    st.success("Rates saved to Excel !")

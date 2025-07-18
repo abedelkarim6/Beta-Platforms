@@ -54,12 +54,24 @@ def fetch_customers():
 
 
 # Fetch range data per customer
+# def fetch_customer_ranges(customer_id):
+#     conn = get_connection()
+#     query = "SELECT * FROM customer_ranges WHERE customer_id = ?"
+#     print(f"Executing query: {query} with customer_id={customer_id}")  # Debugging line
+#     df = pd.read_sql_query(query, conn, params=(customer_id,))  # Ensure params is a tuple
+#     print(f"Fetched {len(df)} rows for customer_id={customer_id}")  # Debugging line
+#     conn.close()
+#     return df
+# Fetch ranges for a specific customer
 def fetch_customer_ranges(customer_id):
     conn = get_connection()
     df = pd.read_sql_query(
-        "SELECT * FROM customer_ranges WHERE customer_id = ?",
-        conn,
-        params=(customer_id,),
+        """
+        SELECT * FROM customer_ranges 
+        WHERE customer_id = ?
+        """, 
+        conn, 
+        params=(customer_id,)
     )
     conn.close()
     return df
